@@ -1,0 +1,26 @@
+{
+  "extensionName": {
+    "message": "Mail Note Copy"
+  },
+  "extensionDescription": {
+    "message": "Save an email as a Markdown note. Choose a destination after you can see its path."
+  },
+  "actionTitle": {
+    "message": "Choose folder and save"
+  },
+  "menuCopyBody": {
+    "message": "Copy body (Mail Note Copy)"
+  },
+  "menuSaveNote": {
+    "message": "Choose folder and save (Mail Note Copy)"
+  },
+  "menuSaveNoteAttachments": {
+    "message": "Choose folder and save with attachments (Mail Note Copy)"
+  },
+  "menuManagePins": {
+    "message": "Manage destinations… (Mail Note Copy)"
+  },
+  "saveDialogTitle": {
+    "message": "Save mail note"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "extensionName": {
+    "message": "Mail Note Copy"
+  },
+  "extensionDescription": {
+    "message": "メールを Markdown ノートとして保存します。保存先のパスを見てから選べます。"
+  },
+  "actionTitle": {
+    "message": "保存先を選んで保存"
+  },
+  "menuCopyBody": {
+    "message": "本文をコピー (Mail Note Copy)"
+  },
+  "menuSaveNote": {
+    "message": "保存先を選んで保存 (Mail Note Copy)"
+  },
+  "menuSaveNoteAttachments": {
+    "message": "保存先を選んで添付も保存 (Mail Note Copy)"
+  },
+  "menuManagePins": {
+    "message": "保存先を管理… (Mail Note Copy)"
+  },
+  "saveDialogTitle": {
+    "message": "メールノートを保存"
+  }
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      margin: 0;
+      padding: 20px 22px 18px;
+      background: #f3f3f3;
+      color: #222;
+    }
+    h3 { margin: 0 0 6px; color: #0078d4; font-size: 18px; }
+    .lead { margin: 0 0 16px; color: #444; font-size: 13px; line-height: 1.5; }
+    .pin {
+      background: #fff;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .pin-top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .pin input {
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 6px 8px;
+    }
+    .path {
+      margin: 6px 0 0;
+      color: #555;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .row { display: flex; gap: 8px; margin-top: 14px; }
+    button {
+      border: none;
+      border-radius: 4px;
+      padding: 9px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+    }
+    button.primary { background: #0078d4; }
+    button.secondary { background: #5a5a5a; }
+    button.danger { background: #a40000; white-space: nowrap; }
+    #empty { color: #666; font-size: 13px; margin: 8px 0 16px; }
+    #status { margin-top: 12px; font-size: 13px; min-height: 1.4em; }
+    #status.ok { color: #0b6a0b; }
+    #status.err { color: #a40000; }
+  </style>
+</head>
+<body>
+  <h3 id="heading"></h3>
+  <p class="lead" id="lead"></p>
+  <div id="empty" hidden></div>
+  <div id="list"></div>
+  <div class="row">
+    <button class="primary" id="addBtn"></button>
+    <button class="secondary" id="closeBtn"></button>
+  </div>
+  <p id="status"></p>
+  <script src="options.js"></script>
+</body>
+</html>

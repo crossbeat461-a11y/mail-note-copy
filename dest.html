@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      margin: 0;
+      padding: 20px 22px 18px;
+      background: #f3f3f3;
+      color: #222;
+    }
+    h3 { margin: 0 0 6px; color: #0078d4; font-size: 18px; }
+    .lead { margin: 0 0 14px; color: #444; font-size: 13px; line-height: 1.5; }
+    .file { margin: 0 0 14px; font-size: 13px; }
+    .file code {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+    label.att {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    .group { font-size: 12px; color: #666; margin: 12px 0 6px; }
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    button.dest {
+      text-align: left;
+      width: 100%;
+      border: 1px solid #d0d0d0;
+      background: #fff;
+      border-radius: 6px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    button.dest:hover { border-color: #0078d4; background: #f4f9fd; }
+    button.dest .title { font-weight: 700; font-size: 14px; }
+    button.dest .sub {
+      display: block;
+      margin-top: 3px;
+      color: #555;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    button.action {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 4px;
+      background: #5a5a5a;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary { background: #0078d4; }
+    #status { margin-top: 14px; font-size: 14px; line-height: 1.5; }
+    #status.ok { color: #0b6a0b; }
+    #status.err { color: #a40000; }
+  </style>
+</head>
+<body>
+  <h3 id="heading"></h3>
+  <p class="lead" id="lead"></p>
+  <p class="file" id="fileLine"></p>
+  <label class="att"><input type="checkbox" id="attBox"><span id="attLabel"></span></label>
+  <div id="groups"></div>
+  <div class="row">
+    <button class="action primary" id="browseBtn"></button>
+    <button class="action" id="manageBtn"></button>
+    <button class="action" id="closeBtn"></button>
+  </div>
+  <p id="status"></p>
+  <script src="dest.js"></script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+[
+  {
+    "namespace": "mailNoteFiles",
+    "functions": [
+      {
+        "name": "getTempDir",
+        "type": "function",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "writeTextFile",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" },
+          { "name": "contents", "type": "string" }
+        ]
+      },
+      {
+        "name": "writeBase64File",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" },
+          { "name": "base64", "type": "string" }
+        ]
+      },
+      {
+        "name": "writeBytes",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" },
+          { "name": "data", "type": "any" }
+        ]
+      },
+      {
+        "name": "copyText",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "text", "type": "string" }
+        ]
+      },
+      {
+        "name": "pickSavePath",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "defaultFileName", "type": "string" },
+          { "name": "title", "type": "string" },
+          { "name": "lastDir", "type": "string" }
+        ]
+      },
+      {
+        "name": "pickFolder",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "title", "type": "string" },
+          { "name": "lastDir", "type": "string" }
+        ]
+      },
+      {
+        "name": "detectObsidianTargets",
+        "type": "function",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "moveFile",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "from", "type": "string" },
+          { "name": "to", "type": "string" }
+        ]
+      },
+      {
+        "name": "fileSize",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" }
+        ]
+      },
+      {
+        "name": "pathExists",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" }
+        ]
+      },
+      {
+        "name": "revealPath",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" }
+        ]
+      },
+      {
+        "name": "copyFiles",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "paths",
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        ]
+      }
+    ]
+  }
+]
