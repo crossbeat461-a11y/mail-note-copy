@@ -3,24 +3,18 @@
     "message": "Mail Note Copy"
   },
   "extensionDescription": {
-    "message": "Save an email as a Markdown note. Choose a destination after you can see its path."
+    "message": "Save the selected email as a Markdown note. You choose the location in Thunderbird’s save dialog."
   },
   "actionTitle": {
-    "message": "Choose folder and save"
+    "message": "Save note"
   },
   "menuCopyBody": {
     "message": "Copy body (Mail Note Copy)"
   },
   "menuSaveNote": {
-    "message": "Choose folder and save (Mail Note Copy)"
+    "message": "Save note… (Mail Note Copy)"
   },
   "menuSaveNoteAttachments": {
-    "message": "Choose folder and save with attachments (Mail Note Copy)"
-  },
-  "menuManagePins": {
-    "message": "Manage destinations… (Mail Note Copy)"
-  },
-  "saveDialogTitle": {
-    "message": "Save mail note"
+    "message": "Save note and attachments… (Mail Note Copy)"
   }
 }

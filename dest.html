@@ -27,26 +27,6 @@
       margin-bottom: 14px;
       font-size: 14px;
     }
-    .group { font-size: 12px; color: #666; margin: 12px 0 6px; }
-    .list { display: flex; flex-direction: column; gap: 8px; }
-    button.dest {
-      text-align: left;
-      width: 100%;
-      border: 1px solid #d0d0d0;
-      background: #fff;
-      border-radius: 6px;
-      padding: 10px 12px;
-      cursor: pointer;
-    }
-    button.dest:hover { border-color: #0078d4; background: #f4f9fd; }
-    button.dest .title { font-weight: 700; font-size: 14px; }
-    button.dest .sub {
-      display: block;
-      margin-top: 3px;
-      color: #555;
-      font-size: 12px;
-      word-break: break-all;
-    }
     .row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
     button.action {
       flex: 1;
@@ -69,10 +49,9 @@
   <p class="lead" id="lead"></p>
   <p class="file" id="fileLine"></p>
   <label class="att"><input type="checkbox" id="attBox"><span id="attLabel"></span></label>
-  <div id="groups"></div>
   <div class="row">
-    <button class="action primary" id="browseBtn"></button>
-    <button class="action" id="manageBtn"></button>
+    <button class="action primary" id="saveBtn"></button>
+    <button class="action" id="copyBtn"></button>
     <button class="action" id="closeBtn"></button>
   </div>
   <p id="status"></p>

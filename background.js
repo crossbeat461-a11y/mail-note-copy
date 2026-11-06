@@ -1,10 +1,8 @@
-/** Mail Note Copy 1.0.0 */
+/** Mail Note Copy 1.1.0 */
 
 const MENU_COPY_BODY = "copy-body";
 const MENU_SAVE_NOTE = "save-note";
 const MENU_SAVE_NOTE_ATTACHMENTS = "save-note-attachments";
-const MENU_MANAGE_PINS = "manage-pins";
-const MAX_PINS = 16;
 
 browser.menus.removeAll().then(() => {
   browser.menus.create({
@@ -22,21 +20,7 @@ browser.menus.removeAll().then(() => {
     title: browser.i18n.getMessage("menuSaveNoteAttachments") || "Save note and attachments…",
     contexts: ["all"]
   });
-  browser.menus.create({
-    id: MENU_MANAGE_PINS,
-    title: browser.i18n.getMessage("menuManagePins") || "Manage destinations…",
-    contexts: ["all"]
-  });
 });
-
-function joinPath(dir, name) {
-  const sep = String(dir).includes("\\") ? "\\" : "/";
-  return String(dir).replace(/[\\/]+$/, "") + sep + name;
-}
-
-function parentDir(filePath) {
-  return String(filePath).replace(/[\\/][^\\/]+$/, "");
-}
 
 function baseName(filePath) {
   const parts = String(filePath).split(/[\\/]/);
@@ -44,96 +28,7 @@ function baseName(filePath) {
 }
 
 let pendingSave = null;
-
-async function getRecentDirs() {
-  try {
-    const stored = await browser.storage.local.get(["recentDirs", "lastSaveDir"]);
-    const recents = Array.isArray(stored.recentDirs) ? stored.recentDirs.slice() : [];
-    if (stored.lastSaveDir && !recents.includes(stored.lastSaveDir)) {
-      recents.unshift(stored.lastSaveDir);
-    }
-    return recents.filter(Boolean).slice(0, 8);
-  } catch (e) {
-    return [];
-  }
-}
-
-async function rememberDir(dir) {
-  if (!dir) {
-    return;
-  }
-  const recents = (await getRecentDirs()).filter((item) => item !== dir);
-  recents.unshift(dir);
-  try {
-    await browser.storage.local.set({
-      lastSaveDir: dir,
-      recentDirs: recents.slice(0, 8)
-    });
-  } catch (e) {
-    /* ignore */
-  }
-}
-
-async function getLastSaveDir() {
-  const recents = await getRecentDirs();
-  return recents[0] || "";
-}
-
-function normalizeDir(dir) {
-  return String(dir || "").replace(/[\\/]+$/, "").toLowerCase();
-}
-
-function defaultPinName(path) {
-  const parts = String(path || "").split(/[\\/]/).filter(Boolean);
-  if (parts.length >= 2) {
-    return parts.slice(-2).join(" / ");
-  }
-  return parts[0] || path;
-}
-
-async function getPinnedFolders() {
-  try {
-    const stored = await browser.storage.local.get("pinnedFolders");
-    const list = Array.isArray(stored.pinnedFolders) ? stored.pinnedFolders : [];
-    return list.filter((item) => item && item.path);
-  } catch (e) {
-    return [];
-  }
-}
-
-async function setPinnedFolders(list) {
-  await browser.storage.local.set({ pinnedFolders: list });
-  return list;
-}
-
-async function addPinnedFolder(path, name) {
-  if (!path) {
-    return { ok: false, cancelled: true };
-  }
-  const pins = await getPinnedFolders();
-  if (pins.some((pin) => normalizeDir(pin.path) === normalizeDir(path))) {
-    return { ok: false, error: "duplicate", pins };
-  }
-  if (pins.length >= MAX_PINS) {
-    return { ok: false, error: "limit", pins };
-  }
-  pins.push({
-    id: "pin_" + Date.now(),
-    name: (name || defaultPinName(path)).trim() || defaultPinName(path),
-    path
-  });
-  await setPinnedFolders(pins);
-  return { ok: true, pins };
-}
-
-async function openPinsWindow() {
-  await browser.windows.create({
-    url: "options.html",
-    type: "popup",
-    width: 560,
-    height: 640
-  });
-}
+let pendingCopyText = "";
 
 function guessAttachmentName(part, index) {
   if (part && part.name) {
@@ -216,18 +111,6 @@ function mergeAttachments(listed, fullMessage) {
   }));
 }
 
-async function readFileBuffer(file) {
-  if (file && typeof file.arrayBuffer === "function") {
-    return file.arrayBuffer();
-  }
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error || new Error("FileReader failed"));
-    reader.readAsArrayBuffer(file);
-  });
-}
-
 function uniqueName(used, rawName) {
   const safe = MailNote.sanitizeFilePart(rawName, 80);
   const key = safe.toLowerCase();
@@ -248,23 +131,13 @@ function uniqueName(used, rawName) {
   return next;
 }
 
-async function fileToBase64(file) {
-  const buffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  const chunk = 0x8000;
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-}
-
 async function showFinishPopup(reason, extra) {
   const params = new URLSearchParams({
     reason: reason || "failed",
     file: extra && extra.file ? extra.file : "",
     path: extra && extra.path ? extra.path : "",
-    count: extra && extra.count != null ? String(extra.count) : "0"
+    count: extra && extra.count != null ? String(extra.count) : "0",
+    downloadId: extra && extra.downloadId != null ? String(extra.downloadId) : ""
   });
   await browser.windows.create({
     url: `finish.html?${params.toString()}`,
@@ -339,28 +212,8 @@ async function loadNoteContext(tab, info) {
   };
 }
 
-async function copyTextFallback(text) {
-  const area = document.createElement("textarea");
-  area.value = text;
-  document.body.appendChild(area);
-  area.select();
-  const ok = document.execCommand("copy");
-  area.remove();
-  if (!ok) {
-    throw new Error("clipboard fallback failed");
-  }
-}
-
-async function copyMarkdownText(markdown) {
-  if (browser.mailNoteFiles && browser.mailNoteFiles.copyText) {
-    await browser.mailNoteFiles.copyText(markdown);
-    return;
-  }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    await navigator.clipboard.writeText(markdown);
-    return;
-  }
-  await copyTextFallback(markdown);
+function copyMarkdownText(markdown) {
+  pendingCopyText = markdown;
 }
 
 async function copyBody(tab, info) {
@@ -377,10 +230,10 @@ async function copyBody(tab, info) {
 async function waitForDownload(downloadId) {
   const already = await browser.downloads.search({ id: downloadId });
   if (already[0] && already[0].state === "complete") {
-    return;
+    return already[0];
   }
   if (already[0] && already[0].state === "interrupted") {
-    throw new Error("download interrupted");
+    throw new Error("cancelled");
   }
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -395,11 +248,11 @@ async function waitForDownload(downloadId) {
       if (delta.state && delta.state.current === "complete") {
         clearTimeout(timer);
         browser.downloads.onChanged.removeListener(onChange);
-        resolve();
+        browser.downloads.search({ id: downloadId }).then((items) => resolve(items[0] || null));
       } else if (delta.state && delta.state.current === "interrupted") {
         clearTimeout(timer);
         browser.downloads.onChanged.removeListener(onChange);
-        reject(new Error("download interrupted"));
+        reject(new Error("cancelled"));
       }
     }
 
@@ -407,146 +260,115 @@ async function waitForDownload(downloadId) {
   });
 }
 
-async function downloadThenMove(file, dest) {
-  const objectUrl = URL.createObjectURL(file);
+async function downloadBlob(blob, fileName) {
+  const objectUrl = URL.createObjectURL(blob);
   let downloadId = null;
   try {
     downloadId = await browser.downloads.download({
       url: objectUrl,
-      filename: "MailNoteCopyTemp/" + baseName(dest),
+      filename: fileName,
       conflictAction: "uniquify",
-      saveAs: false
+      saveAs: true
     });
-    await waitForDownload(downloadId);
-    const items = await browser.downloads.search({ id: downloadId });
-    const downloaded = items && items[0] && items[0].filename;
-    if (!downloaded) {
-      throw new Error("download path missing");
+    const item = await waitForDownload(downloadId);
+    return {
+      id: downloadId,
+      filename: item && item.filename ? item.filename : fileName
+    };
+  } catch (err) {
+    if (downloadId != null) {
+      try {
+        await browser.downloads.erase({ id: downloadId });
+      } catch (e) {
+        /* ignore */
+      }
     }
-    const moved = await browser.mailNoteFiles.moveFile(downloaded, dest);
-    if (!moved || !moved.size) {
-      throw new Error("moved file is empty");
-    }
-    try {
-      await browser.downloads.erase({ id: downloadId });
-    } catch (e) {
-      /* ignore */
-    }
+    throw err;
   } finally {
     setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   }
 }
 
-async function writeAttachmentFile(dest, file) {
+async function listAttachmentsForSave(ctx) {
+  let attachments = ctx.attachments;
   try {
-    await downloadThenMove(file, dest);
-    return;
-  } catch (err) {
-    console.warn("download-then-move failed, falling back:", err);
-  }
-  await browser.mailNoteFiles.writeBase64File(dest, await fileToBase64(file));
-  const size = await browser.mailNoteFiles.fileSize(dest);
-  if (!size) {
-    throw new Error("written file is empty");
-  }
-}
-
-async function writeAttachmentsBeside(messageId, attachments, directory, used) {
-  let saved = 0;
-  const paths = [];
-  const names = [];
-  const errors = [];
-  for (const att of attachments) {
-    if (!att.partName) {
-      errors.push((att.name || "attachment") + ": no partName");
-      continue;
-    }
-    try {
-      const file = await browser.messages.getAttachmentFile(messageId, att.partName);
-      const fileName = uniqueName(used, att.name || guessAttachmentName(att, saved + 1));
-      const dest = joinPath(directory, fileName);
-      await writeAttachmentFile(dest, file);
-      paths.push(dest);
-      names.push(fileName);
-      saved += 1;
-    } catch (err) {
-      console.error("Attachment save failed:", att.name, err);
-      errors.push((att.name || att.partName) + ": " + (err && err.message ? err.message : String(err)));
-    }
-  }
-  return { saved, paths, names, errors };
-}
-
-async function nextAvailablePath(directory, fileName) {
-  let dest = joinPath(directory, fileName);
-  if (!(await browser.mailNoteFiles.pathExists(dest))) {
-    return dest;
-  }
-  const dot = fileName.lastIndexOf(".");
-  const stem = dot > 0 ? fileName.slice(0, dot) : fileName;
-  const ext = dot > 0 ? fileName.slice(dot) : "";
-  let index = 2;
-  dest = joinPath(directory, `${stem}_${index}${ext}`);
-  while (await browser.mailNoteFiles.pathExists(dest)) {
-    index += 1;
-    dest = joinPath(directory, `${stem}_${index}${ext}`);
-  }
-  return dest;
-}
-
-async function savePendingToDirectory(directory, includeAttachments) {
-  if (!pendingSave) {
-    return { ok: false, error: "no pending note" };
-  }
-  if (!directory) {
-    return { ok: false, error: "no folder" };
-  }
-  if (!(await browser.mailNoteFiles.pathExists(directory))) {
-    return { ok: false, error: "folder missing" };
-  }
-
-  const destPath = await nextAvailablePath(directory, pendingSave.note.fileName);
-  let markdown = pendingSave.note.markdown;
-  await rememberDir(directory);
-
-  let savedAttachments = 0;
-  let attachmentErrors = [];
-  let savedNames = [];
-  const wanted = Boolean(includeAttachments);
-  let attachments = pendingSave.ctx.attachments;
-  try {
-    const fresh = await browser.messages.listAttachments(pendingSave.ctx.message.id);
-    attachments = mergeAttachments(fresh, pendingSave.ctx.fullMessage);
+    const fresh = await browser.messages.listAttachments(ctx.message.id);
+    attachments = mergeAttachments(fresh, ctx.fullMessage);
   } catch (e) {
     /* keep the attachments collected when the chooser opened */
   }
+  return attachments;
+}
+
+async function saveWithDialog(includeAttachments) {
+  if (!pendingSave) {
+    return { ok: false, error: "no pending note" };
+  }
+
+  let markdown = pendingSave.note.markdown;
+  const wanted = Boolean(includeAttachments);
+  const attachments = wanted ? await listAttachmentsForSave(pendingSave.ctx) : [];
   const available = attachments.length;
-  if (wanted && available) {
-    const used = new Set([baseName(destPath).toLowerCase()]);
-    const written = await writeAttachmentsBeside(
-      pendingSave.ctx.message.id,
-      attachments,
-      directory,
-      used
+  const used = new Set([pendingSave.note.fileName.toLowerCase()]);
+  const named = [];
+
+  for (const att of attachments) {
+    named.push({
+      ...att,
+      fileName: uniqueName(used, att.name || guessAttachmentName(att, named.length + 1))
+    });
+  }
+
+  if (named.length) {
+    markdown +=
+      "\n## 添付\n\n" +
+      named.map((item) => `- [[${item.fileName}]]`).join("\n") +
+      "\n";
+  }
+
+  let noteDownload;
+  try {
+    noteDownload = await downloadBlob(
+      new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
+      pendingSave.note.fileName
     );
-    savedAttachments = written.saved;
-    savedNames = written.names || [];
-    attachmentErrors = written.errors || [];
-    if (savedNames.length) {
-      markdown +=
-        "\n## 添付\n\n" +
-        savedNames.map((name) => `- [[${name}]]`).join("\n") +
-        "\n";
+  } catch (err) {
+    if (String(err && err.message) === "cancelled") {
+      return { cancelled: true };
+    }
+    throw err;
+  }
+
+  let savedAttachments = 0;
+  const attachmentErrors = [];
+  const savedNames = [];
+  for (const att of named) {
+    if (!att.partName) {
+      attachmentErrors.push((att.name || "attachment") + ": no partName");
+      continue;
+    }
+    try {
+      const file = await browser.messages.getAttachmentFile(pendingSave.ctx.message.id, att.partName);
+      await downloadBlob(file, att.fileName);
+      savedNames.push(att.fileName);
+      savedAttachments += 1;
+    } catch (err) {
+      if (String(err && err.message) === "cancelled") {
+        attachmentErrors.push(att.fileName + ": cancelled");
+        continue;
+      }
+      console.error("Attachment save failed:", att.name, err);
+      attachmentErrors.push(
+        (att.name || att.partName) + ": " + (err && err.message ? err.message : String(err))
+      );
     }
   }
 
-  await browser.mailNoteFiles.writeTextFile(destPath, markdown);
-
   return {
     ok: true,
-    file: baseName(destPath),
-    path: destPath,
-    dir: directory,
+    file: baseName(noteDownload.filename),
+    path: noteDownload.filename,
+    downloadId: noteDownload.id,
     count: savedAttachments,
     wanted,
     available,
@@ -560,11 +382,6 @@ async function openChooser(tab, info, includeAttachments) {
     await showFinishPopup("no_message");
     return;
   }
-  if (!browser.mailNoteFiles) {
-    await copyMarkdownText(MailNote.buildNote(ctx).markdown);
-    await showFinishPopup("copied_body_fallback");
-    return;
-  }
   pendingSave = {
     ctx,
     note: MailNote.buildNote(ctx),
@@ -573,8 +390,8 @@ async function openChooser(tab, info, includeAttachments) {
   await browser.windows.create({
     url: "dest.html",
     type: "popup",
-    width: 540,
-    height: 580
+    width: 520,
+    height: 420
   });
 }
 
@@ -606,74 +423,28 @@ browser.menus.onClicked.addListener((info, tab) => {
     info.menuItemId === MENU_SAVE_NOTE_ATTACHMENTS
   ) {
     runAction(info.menuItemId, tab, info);
-    return;
-  }
-  if (info.menuItemId === MENU_MANAGE_PINS) {
-    openPinsWindow().catch((err) => console.error(err));
   }
 });
 
-browser.runtime.onMessage.addListener(async (message) => {
+browser.runtime.onMessage.addListener((message) => {
   if (message.type === "dest-ready") {
-    let obsidian = [];
-    try {
-      obsidian = await browser.mailNoteFiles.detectObsidianTargets();
-    } catch (e) {
-      console.warn("Obsidian detect failed:", e);
-    }
     const attachments = pendingSave ? pendingSave.ctx.attachments : [];
-    return {
+    return Promise.resolve({
       note: pendingSave && pendingSave.note,
       includeAttachments: pendingSave
         ? pendingSave.includeAttachments || attachments.length > 0
         : false,
       attachmentCount: attachments.length,
-      attachmentNames: attachments.map((item) => item.name).filter(Boolean),
-      recents: await getRecentDirs(),
-      pins: await getPinnedFolders(),
-      obsidian
-    };
+      attachmentNames: attachments.map((item) => item.name).filter(Boolean)
+    });
   }
   if (message.type === "dest-save") {
-    return savePendingToDirectory(message.dir, message.includeAttachments);
+    return saveWithDialog(message.includeAttachments);
   }
-  if (message.type === "dest-browse") {
-    const title = browser.i18n.getMessage("saveDialogTitle") || "Save mail note";
-    const folder = await browser.mailNoteFiles.pickFolder(title, await getLastSaveDir());
-    if (!folder) {
-      return { cancelled: true };
-    }
-    return savePendingToDirectory(folder, message.includeAttachments);
+  if (message.type === "finish-copy") {
+    const text = pendingCopyText;
+    pendingCopyText = "";
+    return Promise.resolve({ text });
   }
-  if (message.type === "dest-manage") {
-    await openPinsWindow();
-    return { ok: true };
-  }
-  if (message.type === "pins-get") {
-    return { pins: await getPinnedFolders() };
-  }
-  if (message.type === "pins-add") {
-    const title = browser.i18n.getMessage("saveDialogTitle") || "Save mail note";
-    const folder = await browser.mailNoteFiles.pickFolder(title, await getLastSaveDir());
-    if (!folder) {
-      return { cancelled: true };
-    }
-    return addPinnedFolder(folder);
-  }
-  if (message.type === "pins-remove") {
-    const pins = (await getPinnedFolders()).filter((pin) => pin.id !== message.id);
-    await setPinnedFolders(pins);
-    return { ok: true, pins };
-  }
-  if (message.type === "pins-rename") {
-    const pins = await getPinnedFolders();
-    const target = pins.find((pin) => pin.id === message.id);
-    if (!target) {
-      return { ok: false, pins };
-    }
-    target.name = String(message.name || "").trim() || defaultPinName(target.path);
-    await setPinnedFolders(pins);
-    return { ok: true, pins };
-  }
-  return null;
+  return undefined;
 });

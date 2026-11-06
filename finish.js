@@ -1,8 +1,8 @@
 const params = new URLSearchParams(window.location.search);
 const reason = params.get("reason") || "failed";
 const file = params.get("file") || "";
-const savedPath = params.get("path") || "";
 const count = params.get("count") || "0";
+const downloadId = Number(params.get("downloadId") || "0");
 const titleElem = document.getElementById("title");
 const msgElem = document.getElementById("msg");
 const openBtn = document.getElementById("openBtn");
@@ -12,19 +12,15 @@ const translations = {
   ja: {
     saved_note: {
       title: "ノートを保存しました (Mail Note Copy)",
-      msg: `${file} を保存しました。Obsidian をそのフォルダに切り替えれば表示されます。`
+      msg: `${file} を保存しました。Obsidian でそのフォルダを開けば表示されます。`
     },
     saved_note_attachments: {
       title: "ノートと添付を保存しました (Mail Note Copy)",
-      msg: `${file} と添付 ${count} 件を同じフォルダに保存しました。`
+      msg: `${file} と添付 ${count} 件を保存しました。`
     },
     copied_body: {
       title: "本文をコピーしました (Mail Note Copy)",
-      msg: "Markdown をクリップボードに入れました。Obsidian でノートを開いて貼り付けてください。新しいファイルを置くときは「ノートを保存…」を使ってください。"
-    },
-    copied_body_fallback: {
-      title: "本文をコピーしました (Mail Note Copy)",
-      msg: "保存ダイアログが使えないため、本文だけをコピーしました。ノートを開いて貼り付けてください。"
+      msg: "Markdown をクリップボードに入れました。Obsidian でノートを開いて貼り付けてください。"
     },
     no_message: {
       title: "保存できませんでした (Mail Note Copy)",
@@ -34,24 +30,21 @@ const translations = {
       title: "保存できませんでした (Mail Note Copy)",
       msg: "保存に失敗しました。メールを表示した状態でもう一度試してください。"
     },
+    copyFailed: "クリップボードへのコピーに失敗しました。保存ダイアログから保存してください。",
     openFolder: "保存先を開く"
   },
   en: {
     saved_note: {
       title: "Note saved (Mail Note Copy)",
-      msg: `Saved ${file}. Switch to that folder in Obsidian to see it.`
+      msg: `Saved ${file}. Open that folder in Obsidian to see it.`
     },
     saved_note_attachments: {
       title: "Note and attachments saved (Mail Note Copy)",
-      msg: `Saved ${file} and ${count} attachment(s) in the same folder.`
+      msg: `Saved ${file} and ${count} attachment(s).`
     },
     copied_body: {
       title: "Body copied (Mail Note Copy)",
-      msg: "Markdown is on the clipboard. Open a note in Obsidian and paste. To create a new file, use Save note…"
-    },
-    copied_body_fallback: {
-      title: "Body copied (Mail Note Copy)",
-      msg: "The save dialog is unavailable, so only the body was copied. Open a note and paste."
+      msg: "Markdown is on the clipboard. Open a note in Obsidian and paste."
     },
     no_message: {
       title: "Could not save (Mail Note Copy)",
@@ -61,6 +54,7 @@ const translations = {
       title: "Could not save (Mail Note Copy)",
       msg: "Save failed. Display the message and try again."
     },
+    copyFailed: "Could not copy to the clipboard. Use Save… instead.",
     openFolder: "Open folder"
   }
 };
@@ -70,14 +64,29 @@ const t = locale[reason] || locale.failed || translations.en.failed;
 titleElem.textContent = t.title;
 msgElem.textContent = t.msg;
 
-const canReveal = Boolean(savedPath && (reason === "saved_note" || reason === "saved_note_attachments"));
+async function copyPending() {
+  if (reason !== "copied_body") {
+    return;
+  }
+  try {
+    const stored = await browser.runtime.sendMessage({ type: "finish-copy" });
+    if (!stored || !stored.text) {
+      throw new Error("empty");
+    }
+    await navigator.clipboard.writeText(stored.text);
+  } catch (e) {
+    msgElem.textContent = locale.copyFailed;
+  }
+}
+
+const canReveal = Boolean(downloadId && (reason === "saved_note" || reason === "saved_note_attachments"));
 if (canReveal) {
   openBtn.hidden = false;
   openBtn.textContent = locale.openFolder;
   openBtn.classList.add("secondary");
   openBtn.addEventListener("click", async () => {
     try {
-      await browser.mailNoteFiles.revealPath(savedPath);
+      await browser.downloads.show(downloadId);
     } catch (e) {
       console.error("Reveal failed:", e);
     }
@@ -92,3 +101,5 @@ document.getElementById("okBtn").addEventListener("click", async () => {
     window.close();
   }
 });
+
+copyPending();
