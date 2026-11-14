@@ -1,9 +1,9 @@
-"""Build mail-note-copy-1.1.0.xpi with ZIP entries using forward slashes."""
+"""Build mail-note-copy-1.1.1.xpi with ZIP entries using forward slashes."""
 import os
 import zipfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(ROOT, "mail-note-copy-1.1.0.xpi")
+OUT = os.path.join(ROOT, "mail-note-copy-1.1.1.xpi")
 FILES = [
     "manifest.json",
     "background.js",

@@ -111,9 +111,12 @@
       .filter(Boolean);
     const bodies = extractBodies(fullMessage);
     const converter = root.htmlToMarkdown;
-    const body = bodies.html && converter
-      ? converter(bodies.html)
-      : (bodies.plain || "").trim();
+    const plain = (bodies.plain || "").trim();
+    const body = plain
+      ? plain
+      : bodies.html && converter
+        ? converter(bodies.html)
+        : "";
 
     const fileStem = `${formatDay(date)}_${sanitizeFilePart(stripReplyPrefix(subject))}`;
     const markdown =

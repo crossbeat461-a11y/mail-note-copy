@@ -1,4 +1,4 @@
-/** Mail Note Copy 1.1.0 */
+/** Mail Note Copy 1.1.1 */
 
 const MENU_COPY_BODY = "copy-body";
 const MENU_SAVE_NOTE = "save-note";

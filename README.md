@@ -2,7 +2,7 @@
 
 Thunderbird add-on that saves the selected email as a Markdown note. You choose the location in Thunderbird’s save dialog.
 
-**Version:** 1.1.0  
+**Version:** 1.1.1  
 **Thunderbird:** 115.0 or later  
 **Add-on ID:** `mail-note-copy@k-tech-studio.com`  
 **Gallery:** https://addons.thunderbird.net/addon/mail-note-copy/  
@@ -24,7 +24,7 @@ This add-on uses only published WebExtension APIs (`messages`, `menus`, `clipboa
 - **ノートを保存** — 保存ダイアログで場所を選んで `YYYY-MM-DD_件名.md` を置く
 - **ノートと添付を保存** — 本文のあと、添付も保存ダイアログで置く。OS が直前のフォルダを覚えていれば、同じ場所に置けます
 
-ファイル名は `日付_件名`（`Re:` / `Fwd:` は除く）。元の件名、日時、From / To / CC / BCC、添付の有無はノート先頭のプロパティに残します。
+ファイル名は `日付_件名`（`Re:` / `Fwd:` は除く）。元の件名、日時、From / To / CC / BCC、添付の有無はノート先頭のプロパティに残します。HTML とテキストの両方があるメールは、テキスト本文でノートを作ります。
 
 ### インストール
 
@@ -37,6 +37,6 @@ Thunderbird の **アドオンとテーマ** から [Mail Note Copy](https://add
 
 ## English
 
-Right-click a message, then save it as `YYYY-MM-DD_subject.md` through the save dialog.
+Right-click a message, then save it as `YYYY-MM-DD_subject.md` through the save dialog. If the message has both HTML and plain text, the note uses the plain-text body.
 
 Install from [Thunderbird Add-ons](https://addons.thunderbird.net/addon/mail-note-copy/). For development, load `manifest.json` as a temporary add-on.

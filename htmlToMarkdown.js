@@ -61,6 +61,7 @@
 
     let source = String(html)
       .replace(/\r\n?/g, "\n")
+      .replace(/<!DOCTYPE[^>]*>/gi, "")
       .replace(/<!--[\s\S]*?-->/g, "")
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -133,7 +134,7 @@
     source = source.replace(/<div[^>]*>/gi, "\n");
     source = source.replace(/<\/div>/gi, "\n");
     source = source.replace(/<\/?(tr)[^>]*>/gi, "\n");
-    source = source.replace(/<\/(td|th)[^>]*>/gi, " | ");
+    source = source.replace(/<\/(td|th)[^>]*>/gi, "\n");
     source = source.replace(/<(td|th)[^>]*>/gi, "");
 
     source = source.replace(/<\/?[a-zA-Z][^>]*>/g, (tag) => {
